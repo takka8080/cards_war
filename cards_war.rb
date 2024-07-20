@@ -1,6 +1,15 @@
+require 'debug'
+
 class Game
   def run
     puts "戦争を開始します。"
+
+    cards = Cards.new
+    player_hand = cards.run
+    player1_hand = player_hand[0]
+    player2_hand = player_hand[1]
+    cards_data = cards.cards_data
+
     puts "カードが配られました。"
 
     flag = true
@@ -8,33 +17,75 @@ class Game
     while(flag == true)
       puts "戦争！"
 
-      flag = game_rule
+      game_rule(player1_hand, player2_hand, cards_data)
+
+      flag = judge(player1_hand, player2_hand)
     end
 
     puts "戦争を終了します。"
   end
 
-  def game_rule
-    cards = Cards.new
-    player1 = cards.run[0]
-    player2 = cards.run[1]
+  def game_rule(player1_hand, player2_hand, cards_data)
+    #binding.break
 
-    if cards.cards_data[:"#{player1[0]}"].to_i == cards.cards_data[:"#{player2[0]}"].to_i
-      puts "プレイヤー1のカードは#{player1[0]}"
-      puts "プレイヤー2のカードは#{player2[0]}"
+    @field = @field.to_a.push(player1_hand[0], player2_hand[0])
+      
+    if cards_data[:"#{player1_hand[0]}"].to_i == cards_data[:"#{player2_hand[0]}"].to_i
+      puts "プレイヤー1のカードは#{player1_hand[0]}"
+      puts "プレイヤー2のカードは#{player2_hand[0]}"
       puts "引き分けです。"
-      return true
-    elsif cards.cards_data[:"#{player1[0]}"].to_i > cards.cards_data[:"#{player2[0]}"].to_i
-      puts "プレイヤー1のカードは#{player1[0]}"
-      puts "プレイヤー2のカードは#{player2[0]}"
-      puts "プレイヤー1が勝ちました。"
+
+      player1_hand.delete_at(0)
+      player2_hand.delete_at(0)
+    elsif cards_data[:"#{player1_hand[0]}"].to_i > cards_data[:"#{player2_hand[0]}"].to_i
+      puts "プレイヤー1のカードは#{player1_hand[0]}"
+      puts "プレイヤー2のカードは#{player2_hand[0]}"
+      puts "プレイヤー1が勝ちました。プレイヤー1はカードを#{@field.size}枚もらいました。"
+
+      player1_hand.delete_at(0)
+      player2_hand.delete_at(0)
+      @player1_take = @player1_take.to_a.push(@field).flatten!
+      @field = []
+    elsif cards_data[:"#{player1_hand[0]}"].to_i < cards_data[:"#{player2_hand[0]}"].to_i
+      puts "プレイヤー1のカードは#{player1_hand[0]}"
+      puts "プレイヤー2のカードは#{player2_hand[0]}"
+      puts "プレイヤー2が勝ちました。プレイヤー2はカードを#{@field.size}枚もらいました。"
+      
+      player1_hand.delete_at(0)
+      player2_hand.delete_at(0)
+      @player2_take = @player2_take.to_a.push(@field).flatten!
+      @field = []
+    end
+
+    if player1_hand == []
+      player1_hand.to_a.push(@player1_take).flatten!
+      player1_hand.shuffle!
+      @player1_take = []
+    end
+
+    if player2_hand == []
+      player2_hand.to_a.push(@player2_take).flatten!
+      player2_hand.shuffle!
+      @player2_take = []
+    end
+  end
+
+  def judge(player1_hand, player2_hand)
+    if player1_hand == [] && @player1_take == []
+      num = player2_hand.size + @player2_take.size
+      puts "プレイヤー1の手札がなくなりました。"
+      puts "プレイヤー1の手札の枚数は0枚です。プレイヤー2の手札は#{num}枚です。"
+      puts "プレイヤー2が1位、プレイヤー1が2位です。"
       return false
-    elsif cards.cards_data[:"#{player1[0]}"].to_i < cards.cards_data[:"#{player2[0]}"].to_i
-      puts "プレイヤー1のカードは#{player1[0]}"
-      puts "プレイヤー2のカードは#{player2[0]}"
-      puts "プレイヤー2が勝ちました。"
+    elsif player2_hand == [] && @player2_take == []
+      num = player1_hand.size + @player1_take.size
+      puts "プレイヤー2の手札がなくなりました。"
+      puts "プレイヤー1の手札の枚数は#{num}枚です。プレイヤー2の手札は0枚です。"
+      puts "プレイヤー1が1位、プレイヤー2が2位です。"
       return false
     end
+
+    return true
   end
 end
 
